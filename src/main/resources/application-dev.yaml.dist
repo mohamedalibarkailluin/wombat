@@ -17,6 +17,41 @@ connector:
 monitor:
   environments-file: monitored/monitored-environments-dev.yaml
 
+# Access control. `quarkus.oidc.tenant-enabled` is the only switch: false (the default set in
+# application.yaml) contacts no provider and leaves every request anonymous. Uncomment the block below to
+# require a Google Workspace account — the provider, the `hd: illuin.tech` claim requirement and the
+# public/authenticated permission sets are already configured in application.yaml, so only the OAuth client
+# credentials are environment-specific. Create them in the Google Cloud console (APIs & Services >
+# Credentials > OAuth client ID > Web application) and register http://localhost:8080/auth/callback there.
+# Startup fails fast if the credentials are missing.
+#quarkus:
+#  oidc:
+#    tenant-enabled: true
+#    client-id: <client-id>.apps.googleusercontent.com
+#    credentials:
+#      secret: <client-secret>
+#    authentication:
+#      # Mandatory with Google: without it Quarkus uses the current request URI as redirect_uri, which can
+#      # never match the fixed URIs registered in the console. Register this exact path there, per origin.
+#      redirect-path: /auth/callback
+#      # Send the caller back to the page they asked for; without it they always land on redirect-path.
+#      restore-path-after-redirect: true
+#      extra-params:
+#        # Pre-selects the Workspace domain in Google's account chooser. A hint only — Google lets the caller
+#        # tamper with it, which is why the `hd` claim is required at token validation.
+#        hd: illuin.tech
+#  # The Dev UI sits behind the login too; uncomment to keep it reachable while authentication is on.
+#  #http:
+#  #  auth:
+#  #    permission:
+#  #      dev-ui:
+#  #        policy: permit
+#  #        paths:
+#  #          - /q/dev/*
+# Note: do NOT set quarkus.oidc.logout.path — Google publishes no end_session_endpoint, so RP-initiated
+# logout cannot work. The header's sign-out link hits /logout (SessionController), which clears the local
+# session cookie; the Google account itself stays signed in on the device.
+
 # Local S3 Backup setup (e.g. SeaweedFS service)
 backup:
   enabled: true

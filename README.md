@@ -368,3 +368,105 @@ To package it without running tests, append `-DskipTests`:
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) ; see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2026 Illuin Technology.
+
+## Access control
+
+The whole HTTP surface (UI and REST) can be restricted to Illuin Google Workspace accounts. There is **no
+custom security code and no custom properties** — everything is `quarkus-oidc` and `quarkus-security`
+configuration, and one runtime flag turns it on and off:
+
+```yaml
+quarkus:
+  oidc:
+    tenant-enabled: false           # the only switch — false (default) serves every request anonymously
+    provider: google                # presets accounts.google.com + openid/email/profile scopes
+    application-type: hybrid        # browsers use the code flow, API clients may pass a bearer token
+    token:
+      required-claims:
+        hd: illuin.tech             # rejected at token validation if absent or different
+  http:
+    auth:
+      permission:
+        public:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: permit
+          paths: [/q/metrics, /q/health, /q/health/*, /logout]
+        authenticated:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: authenticated
+          paths: [/*]
+```
+
+Both `quarkus.oidc.*` and `quarkus.http.auth.*` are runtime config, so `QUARKUS_OIDC_TENANT_ENABLED=true`
+flips authentication and authorization together — there is no state where the permission sets demand an
+identity that no provider can issue, or where a provider is configured but nothing is enforced. Enabling it
+requires an OAuth client (Google Cloud console → *APIs & Services > Credentials > OAuth client ID > Web
+application*, with the callback registered as a redirect URI); startup fails fast without the credentials:
+
+```yaml
+quarkus:
+  oidc:
+    client-id: <client-id>.apps.googleusercontent.com
+    credentials:
+      secret: <client-secret>
+```
+
+### Why `hd` is the claim that matters
+
+Google has no setting that grants access to "everyone with an @illuin.tech address":
+
+- The `hd` **request parameter** (`quarkus.oidc.authentication.extra-params.hd`) only pre-selects the domain in
+  the account chooser. The caller can change it, so it is a UX hint, not a control.
+- Setting the OAuth consent screen to **Internal** limits sign-in to the Workspace organisation that owns the
+  Google Cloud project — a real restriction, but organisation-wide and independent of this config.
+- The trustworthy signal is the **`hd` claim**, which Google issues only for Workspace accounts. The email
+  suffix is not enough: a consumer Google account can be registered with an @illuin.tech address and would
+  otherwise pass. Requiring `hd` closes that.
+
+Note `hd` is absent from Google's advertised `claims_supported`, so confirm it appears in your tokens before
+trusting it in production — a login that ends in a 401 despite valid Google credentials points here. Only
+string claims can be matched this way (`email_verified`, a boolean, cannot), and several accepted values may
+be listed for one claim.
+
+### Deploying behind an ingress
+
+Google refuses to register any redirect URI that is not `https`, the sole exception being `http://localhost`
+— so the deployed origin must terminate TLS before authentication can be enabled there. Register
+`https://<host>/auth/callback` in the console (the callback path only — never the page URLs), and let the app
+derive that same URI from the ingress headers:
+
+```yaml
+quarkus:
+  http:
+    proxy:
+      proxy-address-forwarding: true  # trust X-Forwarded-*; without it redirect_uri uses the pod address
+      enable-forwarded-host: true     # off by default, so X-Forwarded-Host is otherwise ignored
+```
+
+`X-Forwarded-Proto: https` is enough to make the request look secure to the app, so `redirect_uri` comes out
+`https` and the session cookie keeps its `Secure` flag on its own — both verified against a pod speaking plain
+HTTP. Only if the ingress omits that header do you also need
+`quarkus.oidc.authentication.force-redirect-https-scheme=true` and `…cookie-force-secure=true`.
+
+The ingress must forward `/` to the app, not just a sub-path: the dashboard, `/auth/callback` and `/logout`
+all live at the root.
+
+To try the flow before the ingress serves TLS, `kubectl port-forward` to the pod and register
+`http://localhost:8080/auth/callback` — localhost is the only origin Google accepts over plain HTTP.
+
+### Signed-in indicator and sign-out
+
+When authentication is on, every page inheriting `impactLayout.html` shows the signed-in email in the header
+next to a sign-out link; with authentication off, no request is ever authenticated, so nothing is rendered —
+the indicator needs no flag of its own. The layout reads it from the named `currentUser` bean
+(`{inject:currentUser.…}`, produced in `ui.UIConfig`), so no controller has to pass it.
+
+`/logout` (`ui.SessionController`) performs a **local** sign-out: Google's discovery document has no
+`end_session_endpoint`, so `quarkus.oidc.logout.path` cannot be used and no relying party can end the Google
+session itself. The session cookie is cleared and a confirmation page is rendered. Because Google would then
+re-authenticate the next visit silently — making the sign-out look like it did nothing —
+`quarkus.oidc.authentication.extra-params.prompt=select_account` is set so the account chooser appears
+instead; drop it if one-click sign-in matters more than a sign-out that sticks.
+
+`/logout` carries the `permit` policy so that a caller whose token was rejected can still drop their session
+and retry with another account instead of being stuck.
