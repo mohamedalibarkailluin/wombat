@@ -13,6 +13,7 @@ import tech.illuin.wombat.module.extension.CompositeExtensionLoader;
 import tech.illuin.wombat.module.extension.ExtensionLoader;
 import tech.illuin.wombat.module.extension.WombatModuleProperties;
 import tech.illuin.wombat.module.kubernetes_api.KubernetesAPIModule;
+import tech.illuin.wombat.module.llm_google.LLMGoogleModule;
 import tech.illuin.wombat.module.llm_prometheus.LLMPrometheusModule;
 import tech.illuin.wombat.module.llm_static.LLMStaticModule;
 
@@ -38,7 +39,7 @@ class WombatModuleConfigTest
     @Test
     void provideWombatExtensionLoader_returnsCompositeExtensionLoader()
     {
-        WombatModuleProperties properties = properties(true, true, true);
+        WombatModuleProperties properties = properties(true, true, true, true);
         ExtensionLoader loader = this.config.provideWombatExtensionLoader(properties);
 
         assertInstanceOf(CompositeExtensionLoader.class, loader);
@@ -48,7 +49,7 @@ class WombatModuleConfigTest
     void provideWombatModules_loadsModulesFromExtensionLoader()
     {
         ExtensionLoader loader = mock(ExtensionLoader.class);
-        List<WombatModule> expected = List.of(new KubernetesAPIModule(), new LLMStaticModule());
+        List<WombatModule> expected = List.of(new KubernetesAPIModule(), new LLMStaticModule(), new LLMGoogleModule());
         when(loader.load()).thenReturn(expected);
 
         List<WombatModule> result = this.config.provideWombatModules(loader);
@@ -63,7 +64,8 @@ class WombatModuleConfigTest
         List<WombatModule> modules = List.of(
             new KubernetesAPIModule(),
             new LLMPrometheusModule(),
-            new LLMStaticModule()
+            new LLMStaticModule(),
+            new LLMGoogleModule()
         );
 
         JsonMapper jsonMapper = this.config.provideJsonMapper(modules);
@@ -95,7 +97,7 @@ class WombatModuleConfigTest
         assertNotNull(llmHandlers.costResolver());
     }
 
-    private static WombatModuleProperties properties(boolean kubernetesApi, boolean llmPrometheus, boolean llmStatic)
+    private static WombatModuleProperties properties(boolean kubernetesApi, boolean llmPrometheus, boolean llmStatic, boolean llmGoogle)
     {
         return new WombatModuleProperties()
         {
@@ -115,6 +117,12 @@ class WombatModuleConfigTest
             public LlmStaticProperties llmStatic()
             {
                 return () -> llmStatic;
+            }
+
+            @Override
+            public LlmGoogleProperties llmGoogle()
+            {
+                return () -> llmGoogle;
             }
 
             @Override
