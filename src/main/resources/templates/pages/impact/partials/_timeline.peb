@@ -1,0 +1,5 @@
+{% if not timeline.empty %}
+  <!-- Impact histogram -->
+  <div data-vue-timeline data-title="Impact over time — {{ timeline.stepLabel }}"
+       data-note="The range total split over its {{ timeline.bucketCount }} {{ timeline.stepPlural }}: embedded spread evenly, use by the activity measured in each bucket. Buckets no measurement covers carry embedded only."></div>
+  {% endif %}

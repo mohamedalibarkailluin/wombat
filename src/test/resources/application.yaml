@@ -1,4 +1,28 @@
 quarkus:
+  oidc:
+    tenant-enabled: false
+  http:
+    auth:
+      permission:
+        public:
+          enabled: false
+          policy: permit
+          paths:
+            - /q/metrics
+            - /q/health/*
+            - /logout
+            - /public/*
+            - /vendor/*
+            - /icons/*
+            - /impact.css
+            - /easepick-theme.css
+            - /wombat-large-mask.png
+            - /wombat-medium-mask.png
+        authenticated:
+          enabled: false
+          policy: authenticated
+          paths:
+            - /*
   rest-client:
     boavizta-api-url:
       uri: "http://localhost:0/boavizta"

@@ -52,7 +52,7 @@
     <properties>
         <revision>0.0.0-SNAPSHOT</revision>
         <!-- TODO : Update once google module is integrated in wombat-core-->
-        <wombat-core.version>0.12.0</wombat-core.version>
+        <wombat-core.version>0.0.0-SNAPSHOT</wombat-core.version>
         <maven.deploy.skip>true</maven.deploy.skip>
         <compiler-plugin.version>3.16.0</compiler-plugin.version>
         <java.version>25</java.version>
@@ -84,6 +84,7 @@
         <!-- UI deps -->
         <chartjs.version>4.4.0</chartjs.version>
         <easepick.version>1.2.1</easepick.version>
+        <pebble.version>4.1.2</pebble.version>
     </properties>
 
     <dependencies>
@@ -128,12 +129,13 @@
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.qute.web</groupId>
-            <artifactId>quarkus-qute-web</artifactId>
+            <groupId>io.pebbletemplates</groupId>
+            <artifactId>pebble</artifactId>
+            <version>${pebble.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-qute</artifactId>
+            <artifactId>quarkus-oidc</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.jdbc</groupId>
@@ -198,6 +200,11 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-security-oidc</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -270,6 +277,41 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <executions>
+                    <execution>
+                        <id>install-frontend</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>npm</executable>
+                            <arguments><argument>ci</argument></arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build-frontend</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>npm</executable>
+                            <arguments><argument>run</argument><argument>build</argument></arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-frontend</id>
+                        <phase>test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${skipTests}</skip>
+                            <executable>npm</executable>
+                            <arguments><argument>test</argument></arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>

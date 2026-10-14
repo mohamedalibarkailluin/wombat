@@ -319,6 +319,66 @@ If you want to run it in dev mode:
 
 This will require you to have a functional Java 25+ JDK installed on your machine.
 
+### Dashboard frontend
+
+The dashboard uses Pebble for server-rendered layouts, authentication, metric formatting
+and asset details. Interactive controls are precompiled **Vue 3 single-file components**
+under [src/main/frontend](src/main/frontend). This is not a SPA: filters keep the existing
+query parameters and reload the page; no Vue Router or new API is required.
+
+Install **Node 24.15+ (LTS)** and **npm 11+** as well as JDK 25. Maven runs `npm ci` and
+the Vite production build during `generate-resources`, and frontend tests during `test`
+(unless `-DskipTests` is set). The lockfile pins frontend dependencies.
+
+```sh
+npm ci
+npm test
+npm run build
+./mvnw quarkus:dev
+```
+
+For frontend edits during an existing dev session, run `npm run dev` in another terminal.
+It watches and rebuilds the bundle; reload the browser after rebuilding. Vite writes
+only to `target/classes/META-INF/resources/public/ui`, served locally at `/public/ui/app.js`.
+CI installs Node before the Maven build. Use **Vue - Official** in VS Code for `.vue` files.
+
+Pebble partials expose `data-vue-*` mount points with escaped metadata, inert `<template>`
+content and script-safe chart JSON. [main.js](src/main/frontend/main.js) reads these inputs
+and mounts the relevant Vue components. Vue alone defines interactive markup: filter controls,
+modal shells, charts, service details and the theme toggle. Filter options are carried as
+native `<select multiple>` data inside an inert template, not as a second set of controls.
+Pebble retains page composition, asset-detail content and formatted service metric cells.
+Shared date/query/chart utilities live in `frontend/utils`. Static details and
+formatted metric cells are moved as existing DOM nodes, never compiled as Vue templates or
+inserted through `v-html`. Keep server values HTML-escaped, including inside embedded blocks,
+and keep JSON payloads serialized through `TemplateRenderer.scriptSafeJson`.
+Vue templates are compiled by Vite, so the browser does **not** need `unsafe-eval`.
+The early theme bootstrap remains a small local script to avoid a theme flash.
+
+Components own and dispose their chart/picker instances and listeners. Normal navigation
+unmounts islands; BFCache navigation preserves them. Existing Chart.js and easepick assets
+remain Maven-vendored. Dates retain UTC whole-day/exclusive-end semantics, the native date
+fallback and maximum-range clamping. Empty service selection still means all services.
+
+To export browser fixtures from rendering tests, add `-Dtest.preview.directory=target/ui-preview`.
+The full Java build requires a core-module artifact containing the `llm_google` package.
+
+### Optional Google Workspace authentication
+
+OIDC is disabled by default. To protect the dashboard and API, set
+`QUARKUS_OIDC_TENANT_ENABLED=true`, `QUARKUS_OIDC_CLIENT_ID` and
+`QUARKUS_OIDC_CREDENTIALS_SECRET` in the deployment environment. Register the deployed
+application's callback URI with Google; use HTTPS in production.
+The Google provider preset uses a hybrid flow for browser sessions and bearer API clients.
+The required `hd` token claim restricts accounts to `illuin.tech`; override
+`quarkus.oidc.token.required-claims.hd` for another Workspace domain.
+Do not store client secrets in tracked configuration.
+
+The shared Pebble header shows the authenticated user's email and a sign-out link.
+`/logout` clears only the local Wombat session, not the Google account's browser session.
+The next login requests Google's account chooser. Logout, health/metrics and local
+UI resources stay publicly accessible; other endpoints require authentication when enabled.
+
 ### Custom Extensions
 
 Wombat allows user to provide custom modules built with `wombat-core` (see [repository](https://github.com/illuin-tech/wombat-core)) to extend its functionality.

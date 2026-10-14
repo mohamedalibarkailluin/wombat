@@ -1,0 +1,19 @@
+{% extends "layouts/_layout" %}
+{% block content %}
+
+
+<!-- Main -->
+<div class="main">
+  <div class="notice-card">
+    <div class="notice-title">Signed out</div>
+    <div class="notice-body">
+      Your Wombat session has been cleared and coming back will ask which Google account to use. Your
+      Google account itself stays signed in on this device &mdash; only Google can end that session.
+    </div>
+    <a class="btn-apply btn-link" href="/">Back to the report</a>
+  </div>
+</div>
+
+
+
+{% endblock %}

@@ -1,9 +1,34 @@
 quarkus:
+  native:
+    resources:
+      includes: templates/**
   banner:
     path: wombat-banner.txt
   http:
     limits:
       max-initial-line-length: 32768
+    auth:
+      permission:
+        public:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: permit
+          paths:
+            - /q/metrics
+            - /q/health
+            - /q/health/*
+            - /logout
+            - /public/*
+            - /vendor/*
+            - /icons/*
+            - /impact.css
+            - /easepick-theme.css
+            - /wombat-large-mask.png
+            - /wombat-medium-mask.png
+        authenticated:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: authenticated
+          paths:
+            - /*
   rest-client:
     logging:
       scope: none
@@ -40,6 +65,20 @@ quarkus:
   scheduler:
     enabled: true
   kubernetes-client:
+    devservices:
+      enabled: false
+  # Enable with deployment-provided client credentials; keep local development anonymous.
+  oidc:
+    tenant-enabled: false
+    provider: google
+    application-type: hybrid
+    authentication:
+      extra-params:
+        prompt: select_account
+    token:
+      required-claims:
+        hd: illuin.tech
+  keycloak:
     devservices:
       enabled: false
   micrometer:
