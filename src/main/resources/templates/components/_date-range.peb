@@ -1,0 +1,10 @@
+<div class="filter-group date-range-group" v-scope="DateRange()" @vue:mounted="mount($el)" @vue:unmounted="unmount()">
+  <span class="filter-label">Date range</span>
+  <input type="text" id="dateRangePicker" class="date-range-picker"
+         placeholder="Pick range..."
+         data-from-utc="{{ timeRange.start | isoUtc }}"
+         data-to-utc="{{ timeRange.end | isoUtc }}"
+         data-max-span-ms="{{ maxSpan.millis }}" readonly/>
+  <input type="hidden" name="from" id="inputFrom"/>
+  <input type="hidden" name="to" id="inputTo"/>
+</div>

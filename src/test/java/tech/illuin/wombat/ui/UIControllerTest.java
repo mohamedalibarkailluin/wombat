@@ -20,6 +20,9 @@ import tech.illuin.wombat.persistence.model.KubernetesMetricEntity;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.IOException;
 
 
 import static io.restassured.RestAssured.given;
@@ -67,9 +70,9 @@ class UIControllerTest
     }
 
     @Test
-    void get_withSeededMetrics_rendersImpactPage()
+    void get_withSeededMetrics_rendersImpactPage() throws IOException
     {
-        given()
+        String html = given()
             .when().get("/")
             .then()
             .statusCode(200)
@@ -77,7 +80,20 @@ class UIControllerTest
             .body(containsString("api"))
             .body(containsString("worker"))
             .body(containsString("icons/docker.svg"))
-            .body(not(containsString("unrecognizedAssetsTrigger")));
+            .body(not(containsString("unrecognizedAssetsTrigger")))
+            .extract().asString();
+        writePreview("index.html", html);
+    }
+
+    private static void writePreview(String name, String html) throws IOException
+    {
+        String previewDirectory = System.getProperty("test.preview.directory");
+        if (previewDirectory != null)
+        {
+            Path directory = Path.of(previewDirectory);
+            Files.createDirectories(directory);
+            Files.writeString(directory.resolve(name), html);
+        }
     }
 
     /** With security disabled there is nobody to name, so the header carries no signed-in indicator. */
@@ -93,10 +109,10 @@ class UIControllerTest
     }
 
     @Test
-    void get_withUnrecognizedAssets_rendersWarningIconAndModal()
+    void get_withUnrecognizedAssets_rendersWarningIconAndModal() throws IOException
     {
         io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
-            String rawJson = "{\"id\":\"unrec-ui-1\",\"environment-id\":\"test\",\"name\":\"Dropped Extension Asset\",\"type\":\"tech.illuin.dropped.ModuleAsset\"}";
+            String rawJson = "{\"id\":\"unrec-ui-1\",\"environment-id\":\"test\",\"name\":\"Dropped Extension Asset [[globalThis.wombatUnsafe = true]]\",\"type\":\"tech.illuin.dropped.ModuleAsset\"}";
             UnrecognizedAsset unrecognized = new UnrecognizedAsset(
                 AssetIdentity.of("unrec-ui-1", "test", "Dropped Extension Asset"), "tech.illuin.dropped.ModuleAsset", rawJson
             );
@@ -110,7 +126,7 @@ class UIControllerTest
         });
 
         try {
-            given()
+            String html = given()
                 .when().get("/")
                 .then()
                 .statusCode(200)
@@ -118,7 +134,10 @@ class UIControllerTest
                 .body(containsString("unrecognizedAssetsModal"))
                 .body(containsString("Dropped Extension Asset"))
                 .body(containsString("unrec-ui-1"))
-                .body(containsString("tech.illuin.dropped.ModuleAsset"));
+                .body(containsString("tech.illuin.dropped.ModuleAsset"))
+                .body(containsString("[[globalThis.wombatUnsafe = true]]"))
+                .extract().asString();
+            writePreview("warning.html", html);
         }
         finally {
             io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
@@ -215,8 +234,8 @@ class UIControllerTest
             .body(containsString("Impact over time"))
             .body(containsString("daily</div>"))
             .body(containsString("chartImpactTimeline"))
-            .body(containsString("var timelineStarts"))
-            .body(containsString("var timelineStepMs = 86400000"));
+            .body(containsString("id=\"impact-data\" type=\"application/json\""))
+            .body(containsString("\"stepMs\":86400000"));
     }
 
     /** A week or less is the one case the columns go hourly, so intraday swings stay visible. */
@@ -231,7 +250,7 @@ class UIControllerTest
             .then()
             .statusCode(200)
             .body(containsString("hourly</div>"))
-            .body(containsString("var timelineStepMs = 3600000"));
+            .body(containsString("\"stepMs\":3600000"));
     }
 
     @Test
@@ -244,7 +263,7 @@ class UIControllerTest
             .body(containsString("data-series=\"gwp\""))
             .body(containsString("data-series=\"pe\""))
             .body(containsString("data-series=\"adp\""))
-            .body(containsString("key: \"adp\", label: \"Abiotic resources\", unit: \"kgSbeq\""));
+            .body(containsString("\"key\":\"adp\",\"label\":\"Abiotic resources\",\"unit\":\"kgSbeq\""));
     }
 
     @Test

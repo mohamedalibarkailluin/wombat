@@ -1,0 +1,4 @@
+<div class="chart-card {{ color }}" v-scope="ChartView('{{ metric }}')" @vue:mounted="mount($el)" @vue:unmounted="unmount()">
+  <div class="chart-title">{{ title }}</div>
+  <div class="chart-wrap hbar"><div class="hbar-inner"><canvas></canvas></div></div>
+</div>

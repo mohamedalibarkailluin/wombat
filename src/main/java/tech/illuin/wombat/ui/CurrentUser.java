@@ -6,9 +6,8 @@ import jakarta.json.JsonString;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
- * Who the templates should say is signed in. Exposed to Qute as the named bean {@code currentUser}
- * (see {@link UIConfig}), so every page inheriting {@code impactLayout.html} can render the indicator
- * through {@code {inject:currentUser.…}} without threading it through each controller.
+ * Who the templates should say is signed in. The renderer supplies this value in a fresh
+ * context for each request; compiled templates never retain the request identity.
  * <p>
  * Nothing here is configured: with OIDC disabled no request is ever authenticated, so {@code authenticated}
  * is false and the layout renders no badge at all.

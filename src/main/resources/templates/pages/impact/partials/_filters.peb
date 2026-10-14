@@ -1,0 +1,55 @@
+<form class="filter-bar" method="get" action="" id="filterForm" v-scope="ImpactFilters()"
+      @vue:mounted="mount($el)" @submit.prevent="submit()">
+  {% include "components/_date-range" with {"timeRange": env.timeRange, "maxSpan": maxSpan} %}
+  <div class="filter-group">
+    <span class="filter-label">Environment</span>
+    {% embed "components/_picker" with {"pickerId": "envPicker", "triggerId": "envTrigger", "countId": "envCount", "listId": "envList", "kind": "environments"} %}
+      {% block pickerOptions %}
+        {% for environment in environments.options %}
+        <label class="container-item">
+          <input type="radio" name="environment" value="{{ environment.id }}" data-label="{{ environment.name }}"
+                 @change="changed(); environmentChanged()" {% if environment.id == environments.selectedId %}checked{% endif %}/>
+          <span v-pre>{{ environment.name }}</span>
+        </label>
+        {% endfor %}
+      {% endblock %}
+    {% endembed %}
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Assets</span>
+    {% embed "components/_picker" with {"pickerId": "assetPicker", "triggerId": "assetTrigger", "countId": "assetCount", "listId": "assetList", "kind": "assets"} %}
+      {% block pickerOptions %}
+        {% for asset in assets.all %}
+        <label class="container-item">
+          <input type="checkbox" name="assets" value="{{ asset.identity.id }}" data-label="{{ asset.identity.name }}"
+                 @change="changed(); assetsChanged()" {% if assets.selectedIds contains asset.identity.id %}checked{% endif %}/>
+          <span v-pre>{{ asset.identity.name }} &mdash; {{ asset.identity.id }}{% if asset.namespace %} / {{ asset.namespace }}{% endif %}</span>
+        </label>
+        {% endfor %}
+      {% endblock %}
+    {% endembed %}
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Services</span>
+    {% embed "components/_picker" with {"pickerId": "servicePicker", "triggerId": "serviceTrigger", "countId": "serviceCount", "listId": "serviceList", "kind": "services"} %}
+      {% block pickerActions %}
+        <input type="text" id="serviceSearch" v-model="query" class="container-search" placeholder="Search..." autocomplete="off"/>
+        <div class="container-actions">
+          <button type="button" id="btnSelectAll" @click="select(true)">Select all</button>
+          <button type="button" id="btnSelectNone" @click="select(false)">Select none</button>
+        </div>
+      {% endblock %}
+      {% block pickerOptions %}
+        {% for service in env.allServices %}
+        <label class="container-item" v-show="visible($el.textContent)">
+          <input type="checkbox" name="containers" @change="changed()" value="{{ service }}"
+                 {% if env.includedServices contains service %}checked{% endif %}/>
+          <span v-pre>{{ service }}</span>
+        </label>
+        {% endfor %}
+      {% endblock %}
+    {% endembed %}
+  </div>
+  <button type="submit" class="btn-apply">Apply</button>
+  <button type="button" class="btn-reset" id="btnReset" @click="reset()">Reset</button>
+</form>

@@ -83,6 +83,8 @@
         <!-- UI deps -->
         <chartjs.version>4.4.0</chartjs.version>
         <easepick.version>1.2.1</easepick.version>
+        <pebble.version>4.1.2</pebble.version>
+        <petite-vue.version>0.4.1</petite-vue.version>
     </properties>
 
     <dependencyManagement>
@@ -146,12 +148,9 @@
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.qute.web</groupId>
-            <artifactId>quarkus-qute-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-qute</artifactId>
+            <groupId>io.pebbletemplates</groupId>
+            <artifactId>pebble</artifactId>
+            <version>${pebble.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.jdbc</groupId>
@@ -399,6 +398,19 @@
                             <outputDirectory>${project.build.outputDirectory}/META-INF/resources/vendor</outputDirectory>
                             <outputFileName>chart.umd.min.js</outputFileName>
                             <sha512>6784496b7e8a97ce2e9e87afcf7c32674b850cc8fb95f6b102cfa18aa5d779971783fae37584da7c05f13ff84a4aa5bc5b0a37bf07e0d95fdd92e1f97ca3b66f</sha512>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>vendor-petite-vue</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <uri>https://cdn.jsdelivr.net/npm/petite-vue@${petite-vue.version}/dist/petite-vue.es.js</uri>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/resources/vendor</outputDirectory>
+                            <outputFileName>petite-vue.es.js</outputFileName>
+                            <sha512>93ac2382c7d1f5080ba8c32df2c1155466e08441dbb151aafbcaa6f8e30d6c86cb0fe1d160c0592832046be0f188849a6eab9d64a0ab36330843ec46042dadd5</sha512>
                         </configuration>
                     </execution>
                     <execution>

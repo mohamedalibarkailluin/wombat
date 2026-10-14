@@ -1,0 +1,11 @@
+<div class="asset-modal-overlay" id="{{ modalId }}" v-show="opened" v-cloak @click.self="close()" @keydown="trapFocus($event)">
+  <div class="asset-modal" role="dialog" aria-modal="true" aria-labelledby="{{ modalId }}-title">
+    <div class="asset-modal-head">
+      <span class="asset-modal-title" id="{{ modalId }}-title" v-pre>{{ modalTitle }}</span>
+      <button type="button" class="asset-modal-close" @click="close()" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="asset-modal-body" v-pre>
+      {% block modalBody %}{% endblock %}
+    </div>
+  </div>
+</div>

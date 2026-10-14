@@ -1,4 +1,7 @@
-{#include impactLayout.html}
+{% extends "layouts/_layout" %}
+{% block scripts %}<script type="module" src="/public/js/pages/logged-out.js"></script>{% endblock %}
+{% block content %}
+
 
 <!-- Main -->
 <div class="main">
@@ -12,4 +15,6 @@
   </div>
 </div>
 
-{/include}
+
+
+{% endblock %}

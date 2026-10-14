@@ -1,0 +1,25 @@
+{% if not timeline.empty %}
+  <!-- Impact histogram -->
+  <div class="chart-card" v-scope="TimelineChart()" @vue:mounted="mount($el)" @vue:unmounted="unmount()" :class="accent">
+    <div class="chart-head">
+      <div class="chart-title">Impact over time — {{ timeline.stepLabel }}</div>
+      <div class="chart-controls">
+        <div class="chart-pills" id="timelinePills" role="group" aria-label="Metric shown">
+          {% for s in timeline.series %}
+          <button type="button" class="chart-pill" data-series="{{ s.key }}" @click="select($el.dataset.series)" :class="{active: metric === $el.dataset.series}"
+                  :aria-pressed="metric === $el.dataset.series">{{ s.label }}</button>
+          {% endfor %}
+        </div>
+        <div class="chart-pills" id="timelineModes" role="group" aria-label="Chart shape">
+          <button type="button" class="chart-pill" data-mode="bar" @click="shape('bar')" :class="{active: mode === 'bar'}" :aria-pressed="mode === 'bar'">Bars</button>
+          <button type="button" class="chart-pill" data-mode="line" @click="shape('line')" :class="{active: mode === 'line'}" :aria-pressed="mode === 'line'">Lines</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap timeline"><canvas id="chartImpactTimeline"></canvas></div>
+    <div class="chart-note">
+      The range total split over its {{ timeline.bucketCount }} {{ timeline.stepPlural }}: embedded spread evenly, use by
+      the activity measured in each bucket. Buckets no measurement covers carry embedded only.
+    </div>
+  </div>
+  {% endif %}

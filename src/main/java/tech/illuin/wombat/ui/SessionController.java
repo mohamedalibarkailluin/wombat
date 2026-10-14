@@ -2,7 +2,7 @@ package tech.illuin.wombat.ui;
 
 import io.quarkus.oidc.IdTokenCredential;
 import io.quarkus.oidc.OidcSession;
-import io.quarkus.qute.TemplateInstance;
+import io.smallrye.common.annotation.Blocking;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.GET;
@@ -27,21 +27,24 @@ public class SessionController
 {
     private final OidcSession oidcSession;
     private final SecurityIdentity identity;
+    private final TemplateRenderer renderer;
 
-    public SessionController(OidcSession oidcSession, SecurityIdentity identity)
+    public SessionController(OidcSession oidcSession, SecurityIdentity identity, TemplateRenderer renderer)
     {
         this.oidcSession = oidcSession;
         this.identity = identity;
+        this.renderer = renderer;
     }
 
     @GET
+    @Blocking
     @Produces(MediaType.TEXT_HTML)
-    public Uni<TemplateInstance> logout()
+    public Uni<String> logout()
     {
         // Only a code-flow browser session holds an ID token; anonymous and bearer callers have nothing to clear.
         if (this.identity.getCredential(IdTokenCredential.class) == null)
-            return Uni.createFrom().item(Templates.loggedOut());
+            return Uni.createFrom().item(this.renderer.loggedOut());
 
-        return this.oidcSession.logout().replaceWith(() -> Templates.loggedOut());
+        return this.oidcSession.logout().replaceWith(() -> this.renderer.loggedOut());
     }
 }

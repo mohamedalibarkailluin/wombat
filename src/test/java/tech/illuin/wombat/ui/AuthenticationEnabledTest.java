@@ -55,6 +55,14 @@ class AuthenticationEnabledTest
             .statusCode(200);
     }
 
+    @Test
+    void localUiAssets_stayReachableWithoutIdentity()
+    {
+        given().when().get("/vendor/petite-vue.es.js").then().statusCode(200);
+        given().when().get("/public/js/pages/logged-out.js").then().statusCode(200);
+        given().when().get("/icons/docker.svg").then().statusCode(200);
+    }
+
     /** Sign-out must stay reachable without an identity, so a rejected caller is never stuck on a 401/403. */
     @Test
     void logout_staysReachableWithoutIdentity()

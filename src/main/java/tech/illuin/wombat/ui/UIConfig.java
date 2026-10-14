@@ -1,22 +1,28 @@
 package tech.illuin.wombat.ui;
 
-import io.quarkus.security.identity.SecurityIdentity;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.loader.ClasspathLoader;
+import io.quarkus.runtime.LaunchMode;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Named;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
 
 @ApplicationScoped
 public class UIConfig
 {
-    /**
-     * Named so templates can reach it as {@code {inject:currentUser.…}}. {@code @Dependent} rather than
-     * {@code @RequestScoped} because a record is final and so cannot be proxied by a normal scope; each
-     * lookup resolves the identity of the request being rendered, which is what the indicator needs.
-     */
-    @Named("currentUser")
-    @Dependent
-    public CurrentUser provideCurrentUser(SecurityIdentity identity)
+    @Produces
+    @Singleton
+    public PebbleEngine templateEngine()
     {
-        return CurrentUser.from(identity);
+        ClasspathLoader loader = new ClasspathLoader(UIConfig.class.getClassLoader());
+        loader.setPrefix("templates");
+        loader.setSuffix(".peb");
+        return new PebbleEngine.Builder()
+            .loader(loader)
+            .strictVariables(true)
+            .autoEscaping(true)
+            .cacheActive(LaunchMode.current() != LaunchMode.DEVELOPMENT)
+            .extension(new WombatPebbleExtension())
+            .build();
     }
 }

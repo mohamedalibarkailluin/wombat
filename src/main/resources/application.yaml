@@ -1,9 +1,30 @@
 quarkus:
+  native:
+    resources:
+      includes: templates/**
   banner:
     path: wombat-banner.txt
   http:
     limits:
       max-initial-line-length: 32768
+    auth:
+      permission:
+        public:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: permit
+          paths:
+            - /q/metrics
+            - /q/health
+            - /q/health/*
+            - /logout
+            - /public/*
+            - /vendor/*
+            - /icons/*
+        authenticated:
+          enabled: ${quarkus.oidc.tenant-enabled}
+          policy: authenticated
+          paths:
+            - /*
   rest-client:
     logging:
       scope: none
@@ -69,23 +90,6 @@ quarkus:
       # at token validation. Only string claims can be matched here; several values may be listed.
       required-claims:
         hd: illuin.tech
-    auth:
-      permission:
-        # Left open so a scraper, a probe, or a caller whose token was rejected has somewhere to go.
-        public:
-          enabled: ${quarkus.oidc.tenant-enabled}
-          policy: permit
-          paths:
-            - /q/metrics
-            - /q/health
-            - /q/health/*
-            - /logout
-            - /public/*
-        authenticated:
-          enabled: ${quarkus.oidc.tenant-enabled}
-          policy: authenticated
-          paths:
-            - /*
   keycloak:
     devservices:
       # Never start a Keycloak container: OIDC is configured against the real provider or left disabled.

@@ -1,0 +1,16 @@
+<div class="container-picker" id="{{ pickerId }}" data-kind="{{ kind }}"
+     v-scope="Picker()" @vue:mounted="mount($el)" @vue:unmounted="unmount()">
+  <button type="button" class="container-trigger" id="{{ triggerId }}" @click.stop="toggle()"
+          :class="{open: expanded}" :aria-expanded="expanded">
+    <span id="{{ countId }}" v-text="label"></span>
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" class="trigger-chevron">
+      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="container-dropdown" :class="{open: expanded}">
+    {% block pickerActions %}{% endblock %}
+    <div class="container-list" id="{{ listId }}">
+      {% block pickerOptions %}{% endblock %}
+    </div>
+  </div>
+</div>
